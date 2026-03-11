@@ -40,33 +40,67 @@ function NetworkBadge({ network }: { network: NftCollection["network"] }) {
   );
 }
 
-/* ── Collection thumbnail ─────────────────────────────────────────────────── */
+/* ── Emoji fallbacks ──────────────────────────────────────────────────────── */
 
 const SYMBOLS: Record<string, string> = {
-  motocat_racing: "🏎",
-  nodemonkes:     "🐒",
-  "bitcoin-puppets": "🪆",
-  quantum_cats:   "🐱",
-  runestone:      "🪨",
-  "bitcoin-frogs": "🐸",
-  ordinalpunks:   "👤",
-  omnisat:        "✦",
-  "bitcoin-apes": "🦍",
+  motocat_racing:     "🐱",
+  nodemonkes:         "🐒",
+  "bitcoin-puppets":  "🪆",
+  quantum_cats:       "🐱",
+  "bitcoin-frogs":    "🐸",
+  taproot_wizards:    "🧙",
+  honey_badgers:      "🦡",
+  "bitcoin-wizards":  "🔮",
+  bitcoinshrooms:     "🍄",
+  ordzaarpass:        "🎫",
+  opium:              "🎨",
+  ordinalpunks:       "👤",
+  omnisat:            "✦",
+  "bitcoin-apes":     "🦍",
 };
 
+/* ── Collection thumbnail — real image or gradient+emoji fallback ───────── */
+
 function CollectionThumb({ col, size = "lg" }: { col: NftCollection; size?: "lg" | "sm" }) {
-  const h = size === "lg" ? "h-40" : "h-12 w-12";
-  const text = size === "lg" ? "text-5xl" : "text-2xl";
+  const [imgError, setImgError] = useState(false);
   const symbol = SYMBOLS[col.slug] ?? "◆";
+
+  if (col.image && !imgError) {
+    const sizeClass = size === "lg"
+      ? "w-full h-40 rounded-xl"
+      : "h-12 w-12 rounded-lg flex-shrink-0";
+
+    return (
+      <div className={`${sizeClass} overflow-hidden bg-[#111] relative`}>
+        {/* blurred background fill */}
+        <img
+          src={col.image}
+          alt=""
+          aria-hidden
+          className="absolute inset-0 w-full h-full object-cover scale-110 blur-sm opacity-40"
+          onError={() => setImgError(true)}
+        />
+        {/* sharp foreground */}
+        <img
+          src={col.image}
+          alt={col.name}
+          onError={() => setImgError(true)}
+          className="relative z-10 w-full h-full object-contain"
+        />
+      </div>
+    );
+  }
+
+  /* gradient + emoji fallback */
+  const h    = size === "lg" ? "h-40" : "h-12 w-12";
+  const text = size === "lg" ? "text-5xl" : "text-2xl";
   return (
     <div
       className={`${size === "lg" ? "w-full" : ""} ${h} rounded-xl bg-gradient-to-br ${col.bgPattern} flex items-center justify-center relative overflow-hidden flex-shrink-0`}
     >
       <div
         className="absolute inset-0 opacity-10"
-        style={{
-          backgroundImage: `radial-gradient(circle at 30% 50%, ${col.color} 0%, transparent 60%)`,
-        }}
+        style={{ backgroundImage: `radial-gradient(circle at 30% 50%, ${col.color} 0%, transparent 60%)` }}
       />
       <span className={`${text} relative z-10`}>{symbol}</span>
     </div>
@@ -89,16 +123,10 @@ function ActivitySkeleton() {
 
 /* ── Collection detail / activity panel ──────────────────────────────────── */
 
-function ActivityPanel({
-  col,
-  onClose,
-}: {
-  col: NftCollection;
-  onClose: () => void;
-}) {
-  const [activity, setActivity]   = useState<NftActivity[]>([]);
-  const [loading, setLoading]     = useState(true);
-  const [filter, setFilter]       = useState<"all" | "buy" | "sell" | "list">("all");
+function ActivityPanel({ col, onClose }: { col: NftCollection; onClose: () => void }) {
+  const [activity, setActivity] = useState<NftActivity[]>([]);
+  const [loading, setLoading]   = useState(true);
+  const [filter, setFilter]     = useState<"all" | "buy" | "sell" | "list">("all");
 
   useEffect(() => {
     setLoading(true);
@@ -109,12 +137,10 @@ function ActivityPanel({
     });
   }, [col.slug]);
 
-  const filtered =
-    filter === "all" ? activity : activity.filter((a) => a.kind === filter);
-
-  const buys   = activity.filter((a) => a.kind === "buy").length;
-  const sells  = activity.filter((a) => a.kind === "sell").length;
-  const lists  = activity.filter((a) => a.kind === "list").length;
+  const filtered  = filter === "all" ? activity : activity.filter((a) => a.kind === filter);
+  const buys      = activity.filter((a) => a.kind === "buy").length;
+  const sells     = activity.filter((a) => a.kind === "sell").length;
+  const lists     = activity.filter((a) => a.kind === "list").length;
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 px-4 bg-black/70 backdrop-blur-sm">
@@ -128,7 +154,6 @@ function ActivityPanel({
               <NetworkBadge network={col.network} />
             </div>
             <p className="text-gray-500 text-xs mt-1 truncate">{col.description}</p>
-            {/* Mini stats */}
             <div className="flex items-center gap-4 mt-2 flex-wrap">
               {col.floorBTC && (
                 <span className="text-xs text-gray-400">
@@ -147,15 +172,12 @@ function ActivityPanel({
               )}
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-white text-xl leading-none transition-colors flex-shrink-0"
-          >
+          <button onClick={onClose} className="text-gray-500 hover:text-white text-xl leading-none transition-colors flex-shrink-0">
             ✕
           </button>
         </div>
 
-        {/* Activity summary pills */}
+        {/* Activity filter pills */}
         <div className="flex items-center gap-2 px-5 pt-4 pb-3 border-b border-[#1e1e1e] flex-wrap">
           <span className="text-gray-400 text-xs font-medium mr-1">Activity</span>
           {(["all", "buy", "sell", "list"] as const).map((k) => (
@@ -168,9 +190,9 @@ function ActivityPanel({
                   : "border-[#333] text-gray-400 hover:border-[#555] hover:text-white"
               }`}
             >
-              {k === "all"  ? `All (${activity.length})`  :
-               k === "buy"  ? `Buys (${buys})`   :
-               k === "sell" ? `Sells (${sells})`  :
+              {k === "all"  ? `All (${activity.length})` :
+               k === "buy"  ? `Buys (${buys})`           :
+               k === "sell" ? `Sells (${sells})`          :
                               `Listings (${lists})`}
             </button>
           ))}
@@ -190,43 +212,32 @@ function ActivityPanel({
               </tr>
             </thead>
             <tbody>
-              {loading &&
-                Array.from({ length: 8 }, (_, i) => (
-                  <tr key={i}>
-                    <td colSpan={6} className="px-4">
-                      <ActivitySkeleton />
-                    </td>
-                  </tr>
-                ))}
+              {loading && Array.from({ length: 8 }, (_, i) => (
+                <tr key={i}>
+                  <td colSpan={6} className="px-4"><ActivitySkeleton /></td>
+                </tr>
+              ))}
               {!loading && filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-gray-600 text-sm">
-                    No activity found
-                  </td>
+                  <td colSpan={6} className="py-12 text-center text-gray-600 text-sm">No activity found</td>
                 </tr>
               )}
-              {!loading &&
-                filtered.map((act) => (
-                  <tr
-                    key={act.id}
-                    className="border-b border-[#141414] hover:bg-[#161616] transition-colors"
-                  >
-                    <td className="px-4 py-2.5">
-                      <KindBadge kind={act.kind} />
-                    </td>
-                    <td className="px-4 py-2.5 text-gray-300 font-mono">{act.tokenId}</td>
-                    <td className="px-4 py-2.5 text-right font-semibold text-white">
-                      {act.priceDisplay ?? <span className="text-gray-600">—</span>}
-                    </td>
-                    <td className="px-4 py-2.5 text-gray-500 font-mono">
-                      {act.from ?? <span className="text-gray-700">—</span>}
-                    </td>
-                    <td className="px-4 py-2.5 text-gray-500 font-mono">
-                      {act.to ?? <span className="text-gray-700">—</span>}
-                    </td>
-                    <td className="px-4 py-2.5 text-right text-gray-500">{act.date}</td>
-                  </tr>
-                ))}
+              {!loading && filtered.map((act) => (
+                <tr key={act.id} className="border-b border-[#141414] hover:bg-[#161616] transition-colors">
+                  <td className="px-4 py-2.5"><KindBadge kind={act.kind} /></td>
+                  <td className="px-4 py-2.5 text-gray-300 font-mono">{act.tokenId}</td>
+                  <td className="px-4 py-2.5 text-right font-semibold text-white">
+                    {act.priceDisplay ?? <span className="text-gray-600">—</span>}
+                  </td>
+                  <td className="px-4 py-2.5 text-gray-500 font-mono">
+                    {act.from ?? <span className="text-gray-700">—</span>}
+                  </td>
+                  <td className="px-4 py-2.5 text-gray-500 font-mono">
+                    {act.to ?? <span className="text-gray-700">—</span>}
+                  </td>
+                  <td className="px-4 py-2.5 text-right text-gray-500">{act.date}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
@@ -237,15 +248,7 @@ function ActivityPanel({
 
 /* ── Collection card (grid view) ─────────────────────────────────────────── */
 
-function CollectionCard({
-  col,
-  rank,
-  onClick,
-}: {
-  col: NftCollection;
-  rank: number;
-  onClick: () => void;
-}) {
+function CollectionCard({ col, rank, onClick }: { col: NftCollection; rank: number; onClick: () => void }) {
   const loading = col.floorBTC === undefined && col.network === "ordinals";
 
   return (
@@ -253,6 +256,7 @@ function CollectionCard({
       onClick={onClick}
       className="bg-[#161616] border border-[#222] rounded-xl overflow-hidden hover:border-[#333] hover:shadow-[0_0_24px_rgba(247,147,26,0.1)] transition-all duration-200 cursor-pointer group"
     >
+      {/* Thumbnail */}
       <div className="relative">
         <CollectionThumb col={col} size="lg" />
         <div className="absolute top-2 left-2 flex items-center gap-1.5">
@@ -264,7 +268,7 @@ function CollectionCard({
           <NetworkBadge network={col.network} />
         </div>
         <div className="absolute bottom-2 right-2">
-          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-black/60 text-gray-300 border border-white/10">
+          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-black/70 text-gray-300 border border-white/10 backdrop-blur-sm">
             {col.category}
           </span>
         </div>
@@ -276,11 +280,7 @@ function CollectionCard({
             {col.name}
           </p>
           {col.floorChange24h != null && (
-            <span
-              className={`text-xs font-semibold ml-2 flex-shrink-0 ${
-                col.floorChange24h >= 0 ? "text-green-400" : "text-red-400"
-              }`}
-            >
+            <span className={`text-xs font-semibold ml-2 flex-shrink-0 ${col.floorChange24h >= 0 ? "text-green-400" : "text-red-400"}`}>
               {col.floorChange24h >= 0 ? "+" : ""}{col.floorChange24h.toFixed(1)}%
             </span>
           )}
@@ -310,15 +310,11 @@ function CollectionCard({
           </div>
           <div>
             <p className="text-gray-600 text-[10px]">Supply</p>
-            <p className="text-gray-300 text-sm mt-0.5">
-              {col.supply ? col.supply.toLocaleString() : "—"}
-            </p>
+            <p className="text-gray-300 text-sm mt-0.5">{col.supply ? col.supply.toLocaleString() : "—"}</p>
           </div>
           <div>
             <p className="text-gray-600 text-[10px]">Listed</p>
-            <p className="text-gray-300 text-sm mt-0.5">
-              {col.totalListed ? col.totalListed.toLocaleString() : "—"}
-            </p>
+            <p className="text-gray-300 text-sm mt-0.5">{col.totalListed ? col.totalListed.toLocaleString() : "—"}</p>
           </div>
         </div>
 
@@ -337,36 +333,21 @@ function CollectionCard({
 
 /* ── List row ─────────────────────────────────────────────────────────────── */
 
-function CollectionRow({
-  col,
-  rank,
-  onClick,
-}: {
-  col: NftCollection;
-  rank: number;
-  onClick: () => void;
-}) {
+function CollectionRow({ col, rank, onClick }: { col: NftCollection; rank: number; onClick: () => void }) {
   const loading = col.floorBTC === undefined && col.network === "ordinals";
   const Skel = () => <div className="h-3 w-16 bg-[#222] rounded animate-pulse inline-block" />;
 
   return (
-    <tr
-      onClick={onClick}
-      className="border-b border-[#1a1a1a] hover:bg-[#1a1a1a] transition-colors cursor-pointer group"
-    >
+    <tr onClick={onClick} className="border-b border-[#1a1a1a] hover:bg-[#1a1a1a] transition-colors cursor-pointer group">
       <td className="py-3 px-4 text-gray-500 text-xs w-8">{rank}</td>
       <td className="py-3 px-3">
         <div className="flex items-center gap-3">
           <CollectionThumb col={col} size="sm" />
           <div>
             <div className="flex items-center gap-2">
-              <p className="text-white font-medium text-sm group-hover:text-[#f7931a] transition-colors">
-                {col.name}
-              </p>
+              <p className="text-white font-medium text-sm group-hover:text-[#f7931a] transition-colors">{col.name}</p>
               {rank === 1 && (
-                <span className="text-[9px] bg-[#f7931a] text-white px-1.5 py-0.5 rounded font-bold">
-                  Featured
-                </span>
+                <span className="text-[9px] bg-[#f7931a] text-white px-1.5 py-0.5 rounded font-bold">Featured</span>
               )}
             </div>
             <div className="flex items-center gap-1.5 mt-0.5">
@@ -382,19 +363,11 @@ function CollectionRow({
       <td className="py-3 px-3 text-right text-gray-300 text-sm">
         {loading ? <Skel /> : col.volume7dBTC ? `${col.volume7dBTC} BTC` : "—"}
       </td>
-      <td className="py-3 px-3 text-right text-gray-400 text-sm">
-        {col.supply?.toLocaleString() ?? "—"}
-      </td>
-      <td className="py-3 px-3 text-right text-gray-400 text-sm">
-        {col.owners?.toLocaleString() ?? "—"}
-      </td>
+      <td className="py-3 px-3 text-right text-gray-400 text-sm">{col.supply?.toLocaleString() ?? "—"}</td>
+      <td className="py-3 px-3 text-right text-gray-400 text-sm">{col.owners?.toLocaleString() ?? "—"}</td>
       <td className="py-3 px-3 text-right">
         {col.floorChange24h != null ? (
-          <span
-            className={`font-semibold text-sm ${
-              col.floorChange24h >= 0 ? "text-green-400" : "text-red-400"
-            }`}
-          >
+          <span className={`font-semibold text-sm ${col.floorChange24h >= 0 ? "text-green-400" : "text-red-400"}`}>
             {col.floorChange24h >= 0 ? "+" : ""}{col.floorChange24h.toFixed(1)}%
           </span>
         ) : (
@@ -411,12 +384,11 @@ function CollectionRow({
 /* ── Main page ─────────────────────────────────────────────────────────────── */
 
 export default function NFTs() {
-  const [collections, setCollections] = useState<NftCollection[]>(COLLECTIONS);
-  const [view, setView]               = useState<"grid" | "list">("grid");
-  const [selected, setSelected]       = useState<NftCollection | null>(null);
-  const [statsLoading, setStatsLoading] = useState(true);
+  const [collections, setCollections]     = useState<NftCollection[]>(COLLECTIONS);
+  const [view, setView]                   = useState<"grid" | "list">("grid");
+  const [selected, setSelected]           = useState<NftCollection | null>(null);
+  const [statsLoading, setStatsLoading]   = useState(true);
 
-  // Load live floor prices on mount
   useEffect(() => {
     setStatsLoading(true);
     enrichCollections(COLLECTIONS).then((enriched) => {
@@ -426,8 +398,8 @@ export default function NFTs() {
   }, []);
 
   const marketStats = computeMarketStats(collections);
-
   const handleClose = useCallback(() => setSelected(null), []);
+  const featured    = collections[0];
 
   return (
     <>
@@ -442,44 +414,31 @@ export default function NFTs() {
               Floor prices · Bitcoin Ordinals &amp; OPNet OP721 collections
             </p>
           </div>
-          <div className="flex bg-[#161616] border border-[#222] rounded-lg overflow-hidden">
-            <button
-              onClick={() => setView("grid")}
-              className={`px-3 py-1.5 text-sm transition-colors ${
-                view === "grid" ? "bg-[#f7931a] text-white" : "text-gray-400 hover:text-white"
-              }`}
-            >
-              ⊞ Grid
-            </button>
-            <button
-              onClick={() => setView("list")}
-              className={`px-3 py-1.5 text-sm transition-colors ${
-                view === "list" ? "bg-[#f7931a] text-white" : "text-gray-400 hover:text-white"
-              }`}
-            >
-              ☰ List
-            </button>
+          <div className="flex items-center gap-3">
+            <div className="flex bg-[#161616] border border-[#222] rounded-lg overflow-hidden">
+              <button
+                onClick={() => setView("grid")}
+                className={`px-3 py-1.5 text-sm transition-colors ${view === "grid" ? "bg-[#f7931a] text-white" : "text-gray-400 hover:text-white"}`}
+              >
+                ⊞ Grid
+              </button>
+              <button
+                onClick={() => setView("list")}
+                className={`px-3 py-1.5 text-sm transition-colors ${view === "list" ? "bg-[#f7931a] text-white" : "text-gray-400 hover:text-white"}`}
+              >
+                ☰ List
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Market stats */}
         <div className="grid grid-cols-4 gap-4">
           {[
-            { label: "Collections", value: marketStats.totalCollections.toString() },
-            {
-              label: "7d Volume",
-              value: statsLoading ? null : marketStats.totalVolume7d,
-            },
-            {
-              label: "Total Listed",
-              value: statsLoading ? null : marketStats.totalListed > 0
-                ? marketStats.totalListed.toLocaleString()
-                : "—",
-            },
-            {
-              label: "Top Floor",
-              value: statsLoading ? null : marketStats.topFloor,
-            },
+            { label: "Collections",  value: marketStats.totalCollections.toString() },
+            { label: "7d Volume",    value: statsLoading ? null : marketStats.totalVolume7d },
+            { label: "Total Listed", value: statsLoading ? null : marketStats.totalListed > 0 ? marketStats.totalListed.toLocaleString() : "—" },
+            { label: "Top Floor",    value: statsLoading ? null : marketStats.topFloor },
           ].map((s) => (
             <div key={s.label} className="bg-[#161616] border border-[#222] rounded-xl p-4">
               <p className="text-gray-500 text-xs">{s.label}</p>
@@ -492,56 +451,79 @@ export default function NFTs() {
           ))}
         </div>
 
-        {/* Motocat featured banner */}
-        <div
-          onClick={() => setSelected(collections[0])}
-          className="relative rounded-xl border border-[#f7931a]/30 bg-gradient-to-r from-orange-950/40 to-yellow-950/10 p-5 cursor-pointer hover:border-[#f7931a]/60 hover:shadow-[0_0_30px_rgba(247,147,26,0.12)] transition-all overflow-hidden group"
-        >
-          <div className="absolute right-0 top-0 h-full w-48 flex items-center justify-center text-9xl opacity-10 pointer-events-none select-none pr-4">
-            🏎
-          </div>
-          <div className="relative z-10">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#f7931a] text-white">
-                ★ Featured Collection
-              </span>
-              <NetworkBadge network="opnet" />
-            </div>
-            <h2 className="text-white text-xl font-bold group-hover:text-[#f7931a] transition-colors">
-              Motocat Racing
-            </h2>
-            <p className="text-gray-400 text-sm mt-0.5 max-w-lg">
-              High-octane racing cats living on Bitcoin via OPNet OP721 smart contracts.
-              Click to explore all buy &amp; sell activity on-chain.
-            </p>
-            <div className="flex items-center gap-6 mt-3">
-              {collections[0]?.floorBTC && (
-                <div>
-                  <p className="text-gray-600 text-[10px]">Floor</p>
-                  <p className="text-[#f7931a] font-bold">{collections[0].floorBTC} BTC</p>
+        {/* Featured banner — shows real image if loaded */}
+        {featured && (
+          <div
+            onClick={() => setSelected(featured)}
+            className="relative rounded-xl border border-[#f7931a]/30 overflow-hidden cursor-pointer hover:border-[#f7931a]/60 hover:shadow-[0_0_30px_rgba(247,147,26,0.12)] transition-all group"
+          >
+            {/* Background image blur */}
+            {featured.image && (
+              <img
+                src={featured.image}
+                alt=""
+                aria-hidden
+                className="absolute inset-0 w-full h-full object-cover opacity-10 scale-110 blur-md pointer-events-none"
+              />
+            )}
+            <div className={`relative z-10 p-5 ${!featured.image ? 'bg-gradient-to-r from-orange-950/40 to-yellow-950/10' : 'bg-black/60'}`}>
+              {/* Right-side image */}
+              {featured.image ? (
+                <img
+                  src={featured.image}
+                  alt={featured.name}
+                  className="absolute right-0 top-0 h-full w-48 object-cover opacity-25 pointer-events-none"
+                />
+              ) : (
+                <div className="absolute right-0 top-0 h-full w-48 flex items-center justify-center text-9xl opacity-10 pointer-events-none select-none pr-4">
+                  🏎
                 </div>
               )}
-              <div>
-                <p className="text-gray-600 text-[10px]">Network</p>
-                <p className="text-white font-semibold text-sm">OPNet Mainnet</p>
-              </div>
-              <div className="ml-auto text-[#f7931a] font-medium text-sm group-hover:underline">
-                View Activity →
+
+              <div className="relative z-10">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#f7931a] text-white">
+                    ★ Featured Collection
+                  </span>
+                  <NetworkBadge network={featured.network} />
+                </div>
+                <h2 className="text-white text-xl font-bold group-hover:text-[#f7931a] transition-colors">
+                  {featured.name}
+                </h2>
+                <p className="text-gray-400 text-sm mt-0.5 max-w-lg">{featured.description}</p>
+                <div className="flex items-center gap-6 mt-3">
+                  {featured.floorBTC && (
+                    <div>
+                      <p className="text-gray-600 text-[10px]">Floor</p>
+                      <p className="text-[#f7931a] font-bold">{featured.floorBTC} BTC</p>
+                    </div>
+                  )}
+                  {featured.supply && (
+                    <div>
+                      <p className="text-gray-600 text-[10px]">Supply</p>
+                      <p className="text-white font-semibold text-sm">{featured.supply.toLocaleString()}</p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-gray-600 text-[10px]">Network</p>
+                    <p className="text-white font-semibold text-sm">
+                      {featured.network === "opnet" ? "OPNet Mainnet" : "Bitcoin Ordinals"}
+                    </p>
+                  </div>
+                  <div className="ml-auto text-[#f7931a] font-medium text-sm group-hover:underline">
+                    View Activity →
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Collection grid / list */}
         {view === "grid" ? (
           <div className="grid grid-cols-3 gap-4">
             {collections.map((col, i) => (
-              <CollectionCard
-                key={col.slug}
-                col={col}
-                rank={i + 1}
-                onClick={() => setSelected(col)}
-              />
+              <CollectionCard key={col.slug} col={col} rank={i + 1} onClick={() => setSelected(col)} />
             ))}
           </div>
         ) : (
@@ -561,17 +543,16 @@ export default function NFTs() {
               </thead>
               <tbody>
                 {collections.map((col, i) => (
-                  <CollectionRow
-                    key={col.slug}
-                    col={col}
-                    rank={i + 1}
-                    onClick={() => setSelected(col)}
-                  />
+                  <CollectionRow key={col.slug} col={col} rank={i + 1} onClick={() => setSelected(col)} />
                 ))}
               </tbody>
             </table>
           </div>
         )}
+
+        <div className="flex items-center gap-2 text-gray-700 text-[10px]">
+          <span>Activity via Magic Eden Ordinals API</span>
+        </div>
       </div>
     </>
   );

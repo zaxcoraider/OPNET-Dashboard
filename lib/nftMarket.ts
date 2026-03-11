@@ -1,21 +1,24 @@
 /**
- * NFT market data — Magic Eden BTC Ordinals public API + OPNet RPC for OP721 events.
+ * NFT market data — Ordzaar API (primary) + Magic Eden fallback for activity.
  */
 
-const ME_BASE = 'https://api-mainnet.magiceden.dev/v2/ord/btc';
+const ME_BASE       = 'https://api-mainnet.magiceden.dev/v2/ord/btc';
+const ORDZAAR_BASE  = 'https://ordzaar.com/api';
 
 /* ── Types ─────────────────────────────────────────────────────────────── */
 
 export type NftNetwork = 'ordinals' | 'opnet';
 
 export interface NftCollection {
-  slug: string;          // Magic Eden symbol or OPNet contract id
+  slug: string;          // Magic Eden / internal symbol
+  ordzaarSlug?: string;  // Ordzaar collection slug (may differ from slug)
   name: string;
   description: string;
   category: string;
   color: string;
   bgPattern: string;
   network: NftNetwork;
+  image?: string;        // Live image URL from Ordzaar or CDN
   // Live-fetched fields (undefined until loaded)
   floorSats?: number;
   floorBTC?: string;
@@ -39,20 +42,24 @@ export interface NftActivity {
   txId?: string;
 }
 
-/* ── Curated collection catalog (Motocat Racing FIRST) ─────────────────── */
+/* ── Curated collection catalog ─────────────────────────────────────────── */
 
 export const COLLECTIONS: NftCollection[] = [
   {
     slug: 'motocat_racing',
-    name: 'Motocat Racing',
-    description: 'High-octane racing cats on OPNet — Bitcoin-native OP721 NFTs.',
+    ordzaarSlug: 'motocats',
+    name: 'Motocat Racing Club',
+    description: 'Mascots of Bitcoin-native DeFi. 10,000 on-chain cats racing into the Motoswap era of yield farming, staking, and more — all on Bitcoin Layer 1!',
     category: 'OPNet PFP',
     color: '#f7931a',
     bgPattern: 'from-orange-900/40 to-yellow-950/10',
     network: 'opnet',
+    image: 'https://creator-hub-prod.s3.us-east-2.amazonaws.com/ord-motocats_pfp_1754578871657.png',
+    supply: 10000,
   },
   {
     slug: 'nodemonkes',
+    ordzaarSlug: 'nodemonkes',
     name: 'NodeMonkes',
     description: 'The first 10k collection inscribed on Bitcoin block data.',
     category: 'PFP',
@@ -62,6 +69,7 @@ export const COLLECTIONS: NftCollection[] = [
   },
   {
     slug: 'bitcoin-puppets',
+    ordzaarSlug: 'bitcoin-puppets',
     name: 'Bitcoin Puppets',
     description: 'Chaotic hand-drawn puppets. One of the largest Ordinals collections.',
     category: 'PFP',
@@ -71,6 +79,7 @@ export const COLLECTIONS: NftCollection[] = [
   },
   {
     slug: 'quantum_cats',
+    ordzaarSlug: 'quantum_cats',
     name: 'Quantum Cats',
     description: 'Schrodinger\'s cats inscribed on Bitcoin — pioneering OP_CAT advocacy.',
     category: 'Art',
@@ -79,21 +88,73 @@ export const COLLECTIONS: NftCollection[] = [
     network: 'ordinals',
   },
   {
-    slug: 'runestone',
-    name: 'Runestone',
-    description: 'Largest airdrop in Ordinals history. Pure on-chain runes.',
-    category: 'Collectible',
-    color: '#f59e0b',
-    bgPattern: 'from-amber-900/30 to-amber-950/10',
-    network: 'ordinals',
-  },
-  {
     slug: 'bitcoin-frogs',
+    ordzaarSlug: 'bitcoin-frogs',
     name: 'Bitcoin Frogs',
     description: '10,000 frogs sitting on the Bitcoin blockchain.',
     category: 'PFP',
     color: '#34d399',
     bgPattern: 'from-green-900/30 to-green-950/10',
+    network: 'ordinals',
+  },
+  {
+    slug: 'taproot_wizards',
+    ordzaarSlug: 'taproot_wizards',
+    name: 'Taproot Wizards',
+    description: 'Magical wizards pushing the boundaries of what\'s possible on Bitcoin.',
+    category: 'Art',
+    color: '#a78bfa',
+    bgPattern: 'from-violet-900/30 to-violet-950/10',
+    network: 'ordinals',
+  },
+  {
+    slug: 'honey_badgers',
+    ordzaarSlug: 'honey_badgers',
+    name: 'Honey Badgers',
+    description: 'Fearless honey badgers on Bitcoin. The OG Bitcoin spirit animal.',
+    category: 'PFP',
+    color: '#f59e0b',
+    bgPattern: 'from-amber-900/30 to-amber-950/10',
+    network: 'ordinals',
+  },
+  {
+    slug: 'bitcoin-wizards',
+    ordzaarSlug: 'bitcoin-wizards',
+    name: 'Bitcoin Wizards',
+    description: '1,338 wizards living on the Bitcoin blockchain since the early days.',
+    category: 'Art',
+    color: '#60a5fa',
+    bgPattern: 'from-blue-900/30 to-blue-950/10',
+    network: 'ordinals',
+  },
+  {
+    slug: 'bitcoinshrooms',
+    ordzaarSlug: 'bitcoinshrooms',
+    name: 'Bitcoin Shrooms',
+    description: 'Rare psychedelic mushrooms inscribed on Bitcoin. One of the highest floor collections.',
+    category: 'Art',
+    color: '#86efac',
+    bgPattern: 'from-green-900/30 to-emerald-950/10',
+    network: 'ordinals',
+  },
+  {
+    slug: 'ordzaarpass',
+    ordzaarSlug: 'ordzaarpass',
+    name: 'Ordzaar Pass',
+    description: 'Official Ordzaar marketplace access pass — holder perks and fee discounts.',
+    category: 'Utility',
+    color: '#fb923c',
+    bgPattern: 'from-orange-900/30 to-orange-950/10',
+    network: 'ordinals',
+  },
+  {
+    slug: 'opium',
+    ordzaarSlug: 'opium',
+    name: 'O.P.I.U.M.',
+    description: '777 iconic pieces — one of the most exclusive fine art collections on Ordinals.',
+    category: 'Art',
+    color: '#f43f5e',
+    bgPattern: 'from-rose-900/30 to-rose-950/10',
     network: 'ordinals',
   },
   {
@@ -105,48 +166,73 @@ export const COLLECTIONS: NftCollection[] = [
     bgPattern: 'from-red-900/30 to-red-950/10',
     network: 'ordinals',
   },
-  {
-    slug: 'omnisat',
-    name: 'OmniSat',
-    description: 'Rare satoshi art honoring the first 1,000 Bitcoin blocks.',
-    category: 'Art',
-    color: '#a78bfa',
-    bgPattern: 'from-violet-900/30 to-violet-950/10',
-    network: 'ordinals',
-  },
-  {
-    slug: 'bitcoin-apes',
-    name: 'Bitcoin Apes',
-    description: 'Apes on Bitcoin. Bold PFPs from the Ordinals era.',
-    category: 'PFP',
-    color: '#fb923c',
-    bgPattern: 'from-orange-900/30 to-orange-950/10',
-    network: 'ordinals',
-  },
 ];
+
+/* ── Ordzaar API types ─────────────────────────────────────────────────── */
+
+interface OrdzaarCollection {
+  slug: string;
+  name: string;
+  image?: string;
+  imageURI?: string;
+  supply?: number;
+  floorPrice?: number;   // sats
+  volume?: number;       // current period
+  volumeTotal?: number;  // all-time
+  listed?: number;
+  owners?: number;
+  verified?: boolean;
+}
+
+interface OrdzaarResponse {
+  success: boolean;
+  data: {
+    collections: OrdzaarCollection[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+/* ── Ordzaar API helper ──────────────────────────────────────────────────── */
+
+async function fetchOrdzaarCollections(page = 1, limit = 100): Promise<OrdzaarCollection[]> {
+  try {
+    const res = await fetch(
+      `${ORDZAAR_BASE}/collections?page=${page}&limit=${limit}`,
+      { signal: AbortSignal.timeout(10000) },
+    );
+    if (!res.ok) return [];
+    const data = await res.json() as OrdzaarResponse;
+    return data.data?.collections ?? [];
+  } catch {
+    return [];
+  }
+}
 
 /* ── Magic Eden API helpers ──────────────────────────────────────────────── */
 
 interface MEStats {
-  floorPrice?: number;        // sats
-  totalVolume?: number;       // sats
+  floorPrice?: number;
+  totalVolume?: number;
   volume24h?: number;
   volume7d?: number;
   listedCount?: number;
   ownerCount?: number;
   totalItems?: number;
-  floorPriceChange24h?: number; // percent
+  floorPriceChange24h?: number;
 }
 
 interface MEActivity {
   kind: string;
   tokenInscriptionNumber?: string | number;
   tokenMint?: string;
-  price?: number;            // sats
+  price?: number;
   buyer?: string;
   seller?: string;
   source?: string;
-  blockTime?: number;        // unix seconds
+  blockTime?: number;
   txId?: string;
   listedPrice?: number;
 }
@@ -173,7 +259,7 @@ function shortenAddr(addr: string): string {
   return addr.slice(0, 8) + '...' + addr.slice(-6);
 }
 
-/* ── Live stats for one Ordinals collection ─────────────────────────────── */
+/* ── Live stats for one Ordinals collection (Magic Eden fallback) ────────── */
 
 export async function fetchCollectionStats(slug: string): Promise<Partial<NftCollection>> {
   const stats = await meGet<MEStats>(`/collections/${slug}/stats`);
@@ -192,18 +278,53 @@ export async function fetchCollectionStats(slug: string): Promise<Partial<NftCol
   };
 }
 
-/* ── Batch load stats for all Ordinals collections in parallel ───────────── */
+/* ── Batch load stats — Ordzaar primary, Magic Eden fallback ─────────────── */
 
 export async function enrichCollections(
   collections: NftCollection[],
 ): Promise<NftCollection[]> {
+  // Fetch first 2 pages from Ordzaar (up to 200 collections) to cover our list
+  const [page1, page2] = await Promise.all([
+    fetchOrdzaarCollections(1, 100),
+    fetchOrdzaarCollections(2, 100),
+  ]);
+  const ordzaarData = [...page1, ...page2];
+
+  // Build a lookup map by slug
+  const ordzaarMap = new Map<string, OrdzaarCollection>();
+  for (const c of ordzaarData) {
+    ordzaarMap.set(c.slug, c);
+  }
+
   const enriched = await Promise.all(
-    collections.map(async (col) => {
-      if (col.network !== 'ordinals') return col;
-      const extra = await fetchCollectionStats(col.slug);
-      return { ...col, ...extra };
+    collections.map(async (col): Promise<NftCollection> => {
+      // Try Ordzaar first
+      const oz = ordzaarMap.get(col.ordzaarSlug ?? col.slug);
+      if (oz) {
+        const floorSats = oz.floorPrice && oz.floorPrice > 0 ? oz.floorPrice : undefined;
+        return {
+          ...col,
+          image: oz.image ?? oz.imageURI ?? col.image,
+          floorSats,
+          floorBTC: floorSats != null ? satsToBTC(floorSats) : col.floorBTC,
+          supply: oz.supply ?? col.supply,
+          totalListed: oz.listed ?? col.totalListed,
+          owners: oz.owners && oz.owners > 0 ? oz.owners : col.owners,
+          volume7dSats: oz.volume && oz.volume > 0 ? oz.volume : col.volume7dSats,
+          volume7dBTC: oz.volume && oz.volume > 0 ? satsToBTC(oz.volume) : col.volume7dBTC,
+        };
+      }
+
+      // Fallback: Magic Eden for ordinals
+      if (col.network === 'ordinals') {
+        const extra = await fetchCollectionStats(col.slug);
+        return { ...col, ...extra };
+      }
+
+      return col;
     }),
   );
+
   return enriched;
 }
 
@@ -223,7 +344,6 @@ async function fetchOrdinalsActivity(
   slug: string,
   limit: number,
 ): Promise<NftActivity[]> {
-  // kinds: list | delist | buying_broadcasted | sale
   const data = await meGet<MEActivity[]>(
     `/activities?collectionSymbol=${slug}&limit=${limit}` +
     `&kind[]=buying_broadcasted&kind[]=list&kind[]=delist`,
@@ -283,7 +403,7 @@ function generateOpNetActivity(collectionName: string, limit: number): NftActivi
 
   return Array.from({ length: limit }, (_, i): NftActivity => {
     const kind = kinds[Math.floor(rng() * kinds.length)];
-    const priceSats = Math.floor(rng() * 8_000_000 + 500_000); // 0.005 – 0.085 BTC
+    const priceSats = Math.floor(rng() * 8_000_000 + 500_000);
     const ago = Math.floor(rng() * 7 * 24 * 3600 * 1000);
     const date = new Date(now - ago).toLocaleString('en-US', {
       month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit',
