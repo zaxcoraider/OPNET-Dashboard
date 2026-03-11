@@ -12,15 +12,16 @@ const walletConnectBuild = path.resolve(
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Transpile ESM-only packages so Next.js SWC handles them correctly.
-  // @btc-vision/walletconnect has "type":"module" — without transpilePackages
-  // webpack wraps ESM content in CommonJS wrappers and Terser fails.
-  transpilePackages: [
-    '@btc-vision/walletconnect',
-    '@btc-vision/transaction',
-    '@btc-vision/bitcoin',
-    'opnet',
-  ],
+  // Only walletconnect needs transpilation: its browser field does NOT remap
+  // the entry point, so webpack correctly loads build/index.js (ESM) which
+  // needs SWC to convert for Next.js.
+  //
+  // @btc-vision/transaction, @btc-vision/bitcoin, opnet all have a browser
+  // field that maps build/index.js → browser/index.js (pre-built minified CJS
+  // bundles). transpilePackages would cause SWC to parse those minified bundles
+  // and fail with "duplicate private name #_" (SWC bug on minified class fields).
+  // webpack handles pre-built CJS bundles fine WITHOUT SWC — so leave them out.
+  transpilePackages: ['@btc-vision/walletconnect'],
 
   webpack: (config, { isServer, webpack }) => {
     // Point @btc-vision/walletconnect to the ESM build (not the pre-bundled browser build).
