@@ -18,6 +18,18 @@ const nextConfig = {
     // (a standalone webpack bundle that can't be re-bundled by Next.js).
     config.resolve.alias['@btc-vision/walletconnect'] = walletConnectBuild;
 
+    // Prevent webpack from parsing TypeScript declaration files (.d.ts) as JS.
+    // @btc-vision/walletconnect's browser bundle accidentally pulls in .d.ts
+    // files via require.context, causing "Module parse failed: Unexpected token"
+    // errors on syntax like `import { type X }`.
+    const existingNoParse = config.module.noParse;
+    config.module.noParse = (resourcePath) => {
+      if (resourcePath.endsWith('.d.ts')) return true;
+      if (typeof existingNoParse === 'function') return existingNoParse(resourcePath);
+      if (existingNoParse instanceof RegExp) return existingNoParse.test(resourcePath);
+      return false;
+    };
+
     if (!isServer) {
       // Browser polyfills required by @btc-vision packages
       config.resolve.fallback = {
@@ -45,6 +57,7 @@ const nextConfig = {
       test: /\.js$/,
       include: [
         path.resolve(__dirname, 'node_modules/@btc-vision/walletconnect/build'),
+        path.resolve(__dirname, 'node_modules/@btc-vision/walletconnect/browser'),
         path.resolve(__dirname, 'node_modules/@btc-vision/transaction'),
         path.resolve(__dirname, 'node_modules/@btc-vision/bitcoin'),
         path.resolve(__dirname, 'node_modules/opnet'),
