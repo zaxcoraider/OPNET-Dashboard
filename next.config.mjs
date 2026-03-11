@@ -12,23 +12,29 @@ const walletConnectBuild = path.resolve(
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Transpile ESM-only packages so Next.js SWC handles them correctly.
+  // @btc-vision/walletconnect has "type":"module" — without transpilePackages
+  // webpack wraps ESM content in CommonJS wrappers and Terser fails.
+  transpilePackages: [
+    '@btc-vision/walletconnect',
+    '@btc-vision/transaction',
+    '@btc-vision/bitcoin',
+    'opnet',
+  ],
+
   webpack: (config, { isServer, webpack }) => {
-    // Force @btc-vision/walletconnect to use the ESM build output.
-    // The package.json "browser" field remaps build/index.js → browser/index.js
-    // (a standalone webpack bundle that can't be re-bundled by Next.js).
+    // Point @btc-vision/walletconnect to the ESM build (not the pre-bundled browser build).
     config.resolve.alias['@btc-vision/walletconnect'] = walletConnectBuild;
 
-    // Prevent webpack from parsing TypeScript declaration files (.d.ts) as JS.
-    // @btc-vision/walletconnect's browser bundle accidentally pulls in .d.ts
-    // files via require.context, causing "Module parse failed: Unexpected token"
-    // errors on syntax like `import { type X }`.
-    const existingNoParse = config.module.noParse;
-    config.module.noParse = (resourcePath) => {
-      if (resourcePath.endsWith('.d.ts')) return true;
-      if (typeof existingNoParse === 'function') return existingNoParse(resourcePath);
-      if (existingNoParse instanceof RegExp) return existingNoParse.test(resourcePath);
-      return false;
-    };
+    // TypeScript declaration files (.d.ts) match Next.js's /\.(ts|tsx)$/ SWC rule
+    // because they end in ".ts". They have no runtime content but confuse Terser
+    // when included in chunks. Replace them with empty modules before any other
+    // loader runs (enforce:'pre' + pitch short-circuit).
+    config.module.rules.unshift({
+      test: /\.d\.ts$/,
+      enforce: 'pre',
+      use: path.resolve(__dirname, 'lib/empty-loader.js'),
+    });
 
     if (!isServer) {
       // Browser polyfills required by @btc-vision packages
@@ -51,22 +57,6 @@ const nextConfig = {
         })
       );
     }
-
-    // Transpile ESM packages so Next.js SWC can process them
-    config.module.rules.push({
-      test: /\.js$/,
-      include: [
-        path.resolve(__dirname, 'node_modules/@btc-vision/walletconnect/build'),
-        path.resolve(__dirname, 'node_modules/@btc-vision/walletconnect/browser'),
-        path.resolve(__dirname, 'node_modules/@btc-vision/transaction'),
-        path.resolve(__dirname, 'node_modules/@btc-vision/bitcoin'),
-        path.resolve(__dirname, 'node_modules/opnet'),
-      ],
-      use: {
-        loader: 'next-swc-loader',
-        options: { isServer, isPageFile: false },
-      },
-    });
 
     return config;
   },
