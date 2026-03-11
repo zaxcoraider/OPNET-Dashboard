@@ -242,7 +242,7 @@ interface SearchTrigger {
 
 export default function AddressProfile({ searchTrigger }: { searchTrigger?: SearchTrigger }) {
   const [input, setInput] = useState(searchTrigger?.query ?? "");
-  const { data, tokens, nfts, loading, loadingHoldings, error, search, reset } = useAddressData();
+  const { data, tokens, nfts, loading, loadingHoldings, error, search } = useAddressData();
 
   const previewType =
     input.trim().length > 8 ? detectAddressType(input.trim()) : null;
@@ -425,7 +425,7 @@ export default function AddressProfile({ searchTrigger }: { searchTrigger?: Sear
               <div>
                 <p className="text-purple-300 text-sm font-medium">OPNet Testnet Address</p>
                 <p className="text-gray-500 text-xs mt-0.5">
-                  Token &amp; NFT balances are queried from contracts discovered in this address's pending
+                  Token &amp; NFT balances are queried from contracts discovered in this address&apos;s pending
                   transaction history via <span className="font-mono text-gray-400">btc_call</span>.
                 </p>
               </div>
