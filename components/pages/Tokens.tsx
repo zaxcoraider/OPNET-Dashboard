@@ -293,7 +293,7 @@ export default function Tokens() {
       )}
 
       {/* Token table */}
-      <div className="bg-[#161616] border border-[#222] rounded-xl overflow-hidden">
+      <div className="bg-[#161616] border border-[#222] rounded-xl overflow-x-auto">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>

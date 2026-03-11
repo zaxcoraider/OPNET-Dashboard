@@ -433,7 +433,7 @@ export default function NFTs() {
         </div>
 
         {/* Market stats */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
           {[
             { label: "Collections",  value: marketStats.totalCollections.toString() },
             { label: "7d Volume",    value: statsLoading ? null : marketStats.totalVolume7d },
@@ -521,13 +521,13 @@ export default function NFTs() {
 
         {/* Collection grid / list */}
         {view === "grid" ? (
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {collections.map((col, i) => (
               <CollectionCard key={col.slug} col={col} rank={i + 1} onClick={() => setSelected(col)} />
             ))}
           </div>
         ) : (
-          <div className="bg-[#161616] border border-[#222] rounded-xl overflow-hidden">
+          <div className="bg-[#161616] border border-[#222] rounded-xl overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[#222]">

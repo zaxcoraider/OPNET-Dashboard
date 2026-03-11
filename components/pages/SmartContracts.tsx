@@ -453,7 +453,7 @@ export default function SmartContracts() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         {[
           { label: 'Verified Contracts', value: verifiedCount.toString(),                         sub: 'on mainnet' },
           { label: 'OP20 Tokens',        value: CONTRACTS.filter((c) => c.type === 'Token (OP20)').length.toString(), sub: 'fungible' },
@@ -707,7 +707,7 @@ export default function SmartContracts() {
       </div>
 
       {/* Contracts table */}
-      <div className="bg-[#161616] border border-[#222] rounded-xl overflow-hidden">
+      <div className="bg-[#161616] border border-[#222] rounded-xl overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[#222]">

@@ -83,7 +83,7 @@ export default function Ecosystem() {
       </div>
 
       {/* Top stats */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         {[
           { label: 'Total Projects',     value: PROJECTS.length.toString(),  sub: 'Verified by vibecode.finance' },
           { label: 'Live',               value: liveCount.toString(),         sub: 'In production' },
@@ -99,7 +99,7 @@ export default function Ecosystem() {
       </div>
 
       {/* Category overview cards */}
-      <div className="grid grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {ALL_CATEGORIES.map((cat) => {
           const color = CATEGORY_COLORS[cat];
           const icon  = CATEGORY_ICONS[cat];
@@ -170,7 +170,7 @@ export default function Ecosystem() {
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {displayProjects.map((item) => (
             <EcosystemCard key={item.name} item={item} />
           ))}

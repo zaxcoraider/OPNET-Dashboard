@@ -121,7 +121,7 @@ export default function DApps() {
       </div>
 
       {/* Category stat cards */}
-      <div className="grid grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {ALL_CATEGORIES.map((cat) => {
           const color = CATEGORY_COLORS[cat];
           const icon  = CATEGORY_ICONS[cat];
@@ -176,7 +176,7 @@ export default function DApps() {
       {filtered.length === 0 ? (
         <div className="text-center py-16 text-gray-600">No dApps match your search.</div>
       ) : (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {filtered.map((p) => (
             <DAppCard key={p.name} project={p} />
           ))}

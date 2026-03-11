@@ -157,7 +157,7 @@ export default function DeFi() {
       </div>
 
       {/* Summary stats */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         {[
           {
             label: 'Total TVL',
@@ -229,7 +229,7 @@ export default function DeFi() {
       </div>
 
       {/* Protocol cards */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {PROTOCOLS.map((p) => (
           <a
             key={p.name}

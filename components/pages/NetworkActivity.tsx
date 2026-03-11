@@ -172,7 +172,7 @@ export default function NetworkActivity() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         <StatCard
           title="Block Height"
           value={loading ? '—' : stats.blockHeight.toLocaleString()}
@@ -208,7 +208,7 @@ export default function NetworkActivity() {
       </div>
 
       {/* BTC Price + Fee row */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         <div className="bg-[#161616] border border-[#222] rounded-xl p-4 flex items-center gap-4">
           <div className="w-10 h-10 rounded-xl bg-[#f7931a18] flex items-center justify-center text-2xl">₿</div>
           <div>
@@ -250,7 +250,7 @@ export default function NetworkActivity() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {/* Fee history chart */}
         <div className="col-span-2">
           <ChartCard title="Fast Fee History (sat/vB)" subtitle="Sampled every 2 hours">
@@ -311,7 +311,7 @@ export default function NetworkActivity() {
       </div>
 
       {/* Bottom stat grid */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {[
           {
             label: 'Block Height',

@@ -172,7 +172,7 @@ export default function Overview() {
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         {data.loading && !data.blockHeight ? (
           Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-[100px]" />

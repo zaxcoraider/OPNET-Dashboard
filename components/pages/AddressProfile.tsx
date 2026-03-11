@@ -79,7 +79,7 @@ function Skeleton() {
             <div className="h-8 w-36 bg-[#222] rounded ml-auto" />
           </div>
         </div>
-        <div className="grid grid-cols-4 gap-4 mt-5 pt-5 border-t border-[#222]">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-5 pt-5 border-t border-[#222]">
           {[1,2,3,4].map(i => (
             <div key={i} className="bg-[#111] rounded-lg p-3 space-y-2">
               <div className="h-3 w-20 bg-[#222] rounded" />
@@ -93,7 +93,7 @@ function Skeleton() {
         {[1,2].map(i => (
           <div key={i} className="bg-[#161616] border border-[#222] rounded-xl p-5">
             <div className="h-4 w-32 bg-[#222] rounded mb-4" />
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {[1,2,3].map(j => <div key={j} className="h-20 bg-[#111] rounded-lg" />)}
             </div>
           </div>
@@ -110,7 +110,7 @@ function HoldingsSkeleton() {
       {[1,2].map(i => (
         <div key={i} className="bg-[#161616] border border-[#222] rounded-xl p-5">
           <div className="h-4 w-32 bg-[#222] rounded mb-4" />
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {[1,2,3].map(j => <div key={j} className="h-20 bg-[#111] rounded-lg" />)}
           </div>
         </div>
