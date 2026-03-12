@@ -28,7 +28,7 @@ const nextConfig = {
     // variables stay inside their own function wrapper and never collide.
     config.module.rules.unshift({
       test: /node_modules[\\/](@btc-vision[\\/](transaction|bitcoin)|opnet)[\\/]browser[\\/]/,
-      type: 'javascript/commonjs',
+      type: 'javascript/auto',
     });
 
     // .d.ts files end in ".ts" so they match Next.js's SWC rule.
