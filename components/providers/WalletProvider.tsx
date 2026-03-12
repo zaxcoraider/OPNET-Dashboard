@@ -3,14 +3,11 @@
 import React, { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 
-// Lazy-load WalletConnectProvider in a separate async chunk (ssr:false).
-// This keeps the @btc-vision/* browser bundles out of the main webpack chunk
-// so scope-hoisting / concatenateModules cannot cause "e3 already declared".
-const WalletConnectProvider = dynamic(
-  () =>
-    import("@btc-vision/walletconnect").then((m) => ({
-      default: m.WalletConnectProvider,
-    })),
+// Dynamically import the inner provider (which imports @btc-vision/walletconnect)
+// so the entire btc-vision bundle lands in a separate async chunk and never
+// touches the main bundle's webpack scope.
+const WalletProviderInner = dynamic(
+  () => import("./WalletProviderInner"),
   { ssr: false }
 );
 
@@ -25,9 +22,5 @@ export default function WalletProvider({ children }: { children: React.ReactNode
     return <>{children}</>;
   }
 
-  return (
-    <WalletConnectProvider theme="dark">
-      {children}
-    </WalletConnectProvider>
-  );
+  return <WalletProviderInner>{children}</WalletProviderInner>;
 }
