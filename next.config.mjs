@@ -12,8 +12,6 @@ const walletConnectBuild = path.resolve(
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ['@btc-vision/walletconnect'],
-
   webpack: (config, { isServer, webpack }) => {
     config.resolve.alias['@btc-vision/walletconnect'] = walletConnectBuild;
 
