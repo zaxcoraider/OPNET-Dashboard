@@ -5,37 +5,41 @@ import { createRequire } from 'module';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 
-const nm = (pkg) => path.resolve(__dirname, 'node_modules', pkg);
+const walletConnectBuild = path.resolve(
+  __dirname,
+  'node_modules/@btc-vision/walletconnect/build/index.js'
+);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Transpile ESM packages — all btc-vision packages have "type":"module"
-  // build/ dirs contain proper ESM that SWC can handle.
-  transpilePackages: [
-    '@btc-vision/walletconnect',
-    '@btc-vision/transaction',
-    '@btc-vision/bitcoin',
-    'opnet',
-  ],
+  // Only walletconnect needs SWC transpilation.
+  // Its browser field does NOT remap the entry point, so webpack correctly
+  // loads build/index.js (proper ESM).
+  //
+  // @btc-vision/transaction, @btc-vision/bitcoin, opnet all have browser fields
+  // that map build/index.js → browser/index.js (pre-built bundles).
+  // Their build/ dirs are broken (import opnetTestnet/toHex from @btc-vision/bitcoin
+  // which that package doesn't export). We MUST use their browser/ bundles.
+  // Those bundles are not SWC-processed — they're loaded as-is by webpack.
+  transpilePackages: ['@btc-vision/walletconnect'],
 
   webpack: (config, { isServer, webpack }) => {
-    // All three @btc-vision packages + opnet have a browser field that maps
-    //   "./build/index.js" → "./browser/index.js"
-    // Those browser/ dirs are pre-built minified bundles that cannot be
-    // re-bundled by webpack (variable name collisions, SWC parse errors).
-    // Fix: point each package directly to its build/index.js AND disable
-    // aliasFields so the browser field can't remap them back.
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      '@btc-vision/walletconnect': nm('@btc-vision/walletconnect/build/index.js'),
-      '@btc-vision/transaction':   nm('@btc-vision/transaction/build/index.js'),
-      '@btc-vision/bitcoin':       nm('@btc-vision/bitcoin/build/index.js'),
-    };
+    // Alias walletconnect to its ESM build.
+    // browser field for this package only remaps Buffer/crypto/stream/zlib
+    // (not the entry point), so this alias is respected.
+    config.resolve.alias['@btc-vision/walletconnect'] = walletConnectBuild;
 
     if (!isServer) {
-      // Disable browser field file-aliasing so aliases above aren't remapped
-      // back to browser/ bundles. Polyfills are covered by fallback below.
-      config.resolve.aliasFields = [];
+      // Disable module concatenation (scope hoisting).
+      // @btc-vision/transaction's browser/ bundle + btc-vision-bitcoin.js are
+      // pre-built minified files that use short var names (e3, etc.).
+      // When webpack scope-hoists them into the same function, those names
+      // collide → "Identifier 'e3' already declared" at runtime.
+      // Disabling concatenation keeps each module in its own function scope.
+      config.optimization = {
+        ...config.optimization,
+        concatenateModules: false,
+      };
 
       // Browser polyfills for node built-ins used by @btc-vision packages
       config.resolve.fallback = {
@@ -59,7 +63,7 @@ const nextConfig = {
     }
 
     // .d.ts files match Next.js's /\.(ts|tsx)$/ SWC rule (they end in .ts).
-    // They have no runtime content — replace with empty modules.
+    // They have no runtime content — stub them out before any loader runs.
     config.module.rules.unshift({
       test: /\.d\.ts$/,
       enforce: 'pre',
