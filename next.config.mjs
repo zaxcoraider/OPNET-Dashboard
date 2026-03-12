@@ -17,20 +17,6 @@ const nextConfig = {
   webpack: (config, { isServer, webpack }) => {
     config.resolve.alias['@btc-vision/walletconnect'] = walletConnectBuild;
 
-    // @btc-vision/transaction, @btc-vision/bitcoin and opnet all have
-    // "type":"module" in their package.json.  webpack therefore treats their
-    // pre-built browser/ bundles as ESM and tries to scope-hoist them together,
-    // producing "Identifier 'e3' already declared" because the minified files
-    // share short variable names.
-    //
-    // Forcing `javascript/commonjs` on those browser/ directories tells webpack
-    // they are CommonJS.  CJS modules are NEVER scope-hoisted, so their local
-    // variables stay inside their own function wrapper and never collide.
-    config.module.rules.unshift({
-      test: /node_modules[\\/](@btc-vision[\\/](transaction|bitcoin)|opnet)[\\/]browser[\\/]/,
-      type: 'javascript/auto',
-    });
-
     // .d.ts files end in ".ts" so they match Next.js's SWC rule.
     // They have no runtime value — stub them out before any loader runs.
     config.module.rules.unshift({
@@ -40,6 +26,14 @@ const nextConfig = {
     });
 
     if (!isServer) {
+      // Disable scope hoisting (module concatenation) for the client bundle.
+      // @btc-vision browser bundles use top-level ESM imports; webpack detects
+      // them as ESM and concatenates them into one scope, causing
+      // "Identifier 'e3' already declared" collisions in minified output.
+      // WalletProvider already loads them in a separate async chunk via
+      // next/dynamic, but disabling concatenation is the belt-and-suspenders fix.
+      config.optimization.concatenateModules = false;
+
       config.resolve.fallback = {
         ...config.resolve.fallback,
         buffer: require.resolve('buffer/'),
