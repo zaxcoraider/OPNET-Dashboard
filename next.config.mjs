@@ -12,36 +12,34 @@ const walletConnectBuild = path.resolve(
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Only walletconnect needs SWC transpilation.
-  // Its browser field does NOT remap the entry point, so webpack correctly
-  // loads build/index.js (proper ESM).
-  //
-  // @btc-vision/transaction, @btc-vision/bitcoin, opnet all have browser fields
-  // that map build/index.js → browser/index.js (pre-built bundles).
-  // Their build/ dirs are broken (import opnetTestnet/toHex from @btc-vision/bitcoin
-  // which that package doesn't export). We MUST use their browser/ bundles.
-  // Those bundles are not SWC-processed — they're loaded as-is by webpack.
   transpilePackages: ['@btc-vision/walletconnect'],
 
   webpack: (config, { isServer, webpack }) => {
-    // Alias walletconnect to its ESM build.
-    // browser field for this package only remaps Buffer/crypto/stream/zlib
-    // (not the entry point), so this alias is respected.
     config.resolve.alias['@btc-vision/walletconnect'] = walletConnectBuild;
 
-    if (!isServer) {
-      // Disable module concatenation (scope hoisting).
-      // @btc-vision/transaction's browser/ bundle + btc-vision-bitcoin.js are
-      // pre-built minified files that use short var names (e3, etc.).
-      // When webpack scope-hoists them into the same function, those names
-      // collide → "Identifier 'e3' already declared" at runtime.
-      // Disabling concatenation keeps each module in its own function scope.
-      config.optimization = {
-        ...config.optimization,
-        concatenateModules: false,
-      };
+    // @btc-vision/transaction, @btc-vision/bitcoin and opnet all have
+    // "type":"module" in their package.json.  webpack therefore treats their
+    // pre-built browser/ bundles as ESM and tries to scope-hoist them together,
+    // producing "Identifier 'e3' already declared" because the minified files
+    // share short variable names.
+    //
+    // Forcing `javascript/commonjs` on those browser/ directories tells webpack
+    // they are CommonJS.  CJS modules are NEVER scope-hoisted, so their local
+    // variables stay inside their own function wrapper and never collide.
+    config.module.rules.unshift({
+      test: /node_modules[\\/](@btc-vision[\\/](transaction|bitcoin)|opnet)[\\/]browser[\\/]/,
+      type: 'javascript/commonjs',
+    });
 
-      // Browser polyfills for node built-ins used by @btc-vision packages
+    // .d.ts files end in ".ts" so they match Next.js's SWC rule.
+    // They have no runtime value — stub them out before any loader runs.
+    config.module.rules.unshift({
+      test: /\.d\.ts$/,
+      enforce: 'pre',
+      use: path.resolve(__dirname, 'lib/empty-loader.js'),
+    });
+
+    if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
         buffer: require.resolve('buffer/'),
@@ -53,7 +51,6 @@ const nextConfig = {
         path: false,
       };
 
-      // Inject Buffer and process as globals
       config.plugins.push(
         new webpack.ProvidePlugin({
           Buffer: ['buffer', 'Buffer'],
@@ -61,14 +58,6 @@ const nextConfig = {
         })
       );
     }
-
-    // .d.ts files match Next.js's /\.(ts|tsx)$/ SWC rule (they end in .ts).
-    // They have no runtime content — stub them out before any loader runs.
-    config.module.rules.unshift({
-      test: /\.d\.ts$/,
-      enforce: 'pre',
-      use: path.resolve(__dirname, 'lib/empty-loader.js'),
-    });
 
     return config;
   },
